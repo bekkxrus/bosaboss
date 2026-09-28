@@ -10,6 +10,10 @@ import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import PromoBanner from '../components/ui/PromoBanner';
 
+// Stock photos from Pexels (free for commercial use)
+const photo = (id: number, width: number) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
+
 const SinglePageHome: React.FC = () => {
   // Quote form state
   const [formData, setFormData] = useState({
@@ -175,21 +179,29 @@ const SinglePageHome: React.FC = () => {
     {
       icon: Truck,
       title: 'Full Logistics Solutions',
+      image: photo(5876475, 800),
+      imageAlt: 'Semi truck with red trailer at a warehouse loading dock',
       description: 'Comprehensive hiring and management of owner-operators, lease drivers, and company drivers with consistent freight.',
     },
     {
       icon: Users,
       title: 'Professional Dispatch',
+      image: photo(7709089, 800),
+      imageAlt: 'Dispatcher with headset working on a laptop',
       description: 'Expert load booking, broker communication, rate negotiation, and complete paperwork management.',
     },
     {
       icon: Shield,
       title: 'In-House Departments',
+      image: photo(38136632, 800),
+      imageAlt: 'Logistics manager checking inventory on a tablet in a warehouse',
       description: 'Experienced dispatchers, safety coordinators, accounting professionals, and fleet support teams.',
     },
     {
       icon: Clock,
       title: '24/7 Support',
+      image: photo(2199293, 800),
+      imageAlt: 'Fleet of semi trucks driving on a highway at sunset',
       description: 'Round-the-clock assistance ensuring you\'re never alone on the road with dedicated team support.',
     },
   ];
@@ -307,19 +319,15 @@ const SinglePageHome: React.FC = () => {
 
       {/* Hero Section */}
       <section id="home" className="min-h-screen flex items-center relative overflow-hidden">
-        {/* Background Video */}
+        {/* Background Photo */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <video 
+          <img
+            src={photo(37538286, 1920)}
+            alt="Red semi truck driving on a highway"
             className="absolute inset-0 w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-          >
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-semi-truck-driving-on-a-highway-at-sunset-39756-large.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0 bg-black/80"></div>
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
@@ -365,6 +373,19 @@ const SinglePageHome: React.FC = () => {
             </p>
           </div>
 
+          <div className="relative mb-16 rounded-2xl overflow-hidden border border-red-primary/30 shadow-red-glow">
+            <img
+              src={photo(27099095, 1600)}
+              alt="Red Kenworth semi truck on the open highway"
+              className="w-full h-64 md:h-96 object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            <p className="absolute bottom-6 left-6 right-6 text-xl md:text-3xl font-black text-white">
+              Keeping America's freight <span className="text-red-primary">moving</span> — mile after mile.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
@@ -399,12 +420,23 @@ const SinglePageHome: React.FC = () => {
             {services.map((service, index) => {
               const IconComponent = service.icon;
               return (
-                <Card key={index} hover className="text-center group">
-                  <div className="bg-red-primary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-red-primary/30 transition-all duration-300 group-hover:shadow-red-glow">
-                    <IconComponent className="h-8 w-8 text-red-primary group-hover:scale-110 transition-transform duration-300" />
+                <Card key={index} hover className="text-center group overflow-hidden !p-0">
+                  <div className="relative h-44 overflow-hidden">
+                    <img
+                      src={service.image}
+                      alt={service.imageAlt}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                  </div>
+                  <div className="px-6 pb-6">
+                  <div className="bg-red-primary w-14 h-14 rounded-full flex items-center justify-center mx-auto -mt-7 mb-5 relative shadow-red-glow">
+                    <IconComponent className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-4 group-hover:text-red-primary transition-colors duration-300">{service.title}</h3>
                   <p className="text-white/70 leading-relaxed">{service.description}</p>
+                  </div>
                 </Card>
               );
             })}
@@ -599,15 +631,32 @@ const SinglePageHome: React.FC = () => {
       {/* Driver Section */}
       <section id="driver" className="py-20 bg-hero-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-              Join Our <span className="text-red-primary">Driver Network</span>
-            </h2>
-            <p className="text-lg text-white/80 max-w-3xl mx-auto mb-12">
-              Partner with BosaBoss and take control of your success. We provide the loads, 
-              support, and tools you need to build a profitable trucking business.
-            </p>
-            
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                Join Our <span className="text-red-primary">Driver Network</span>
+              </h2>
+              <p className="text-lg text-white/80 mb-8">
+                Partner with BosaBoss and take control of your success. We provide the loads,
+                support, and tools you need to build a profitable trucking business.
+              </p>
+              <Button
+                size="lg"
+                className="shadow-red-glow-lg"
+                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Apply to Drive With Us
+              </Button>
+            </div>
+            <div className="relative rounded-2xl overflow-hidden border border-red-primary/30 shadow-red-glow">
+              <img
+                src={photo(7541981, 1200)}
+                alt="Truck driver sitting in the cab of his truck"
+                className="w-full h-72 md:h-96 object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            </div>
           </div>
 
           {/* Driver Benefits - REMOVED PRICING SECTION */}
