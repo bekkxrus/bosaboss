@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { 
   Truck, Users, Shield, Clock, Star, Globe, Award,
   Calculator, MapPin, CheckCircle, AlertCircle,
-  Settings, RefreshCw, Phone, Mail, MessageSquare,
+  Phone, Mail, MessageSquare,
   UserCheck, FileText
 } from 'lucide-react';
-import { supabase, testSupabaseConnection } from '../lib/supabase';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -40,72 +39,15 @@ const SinglePageHome: React.FC = () => {
     language: 'english',
   });
 
-  // Driver form state
-  const [, setDriverData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    cdlNumber: '',
-    cdlClass: '',
-    cdlExpiration: '',
-    experience: '',
-    truckType: '',
-    trailerType: '',
-    insuranceCarrier: '',
-    policyNumber: '',
-    mcNumber: '',
-    dotNumber: '',
-    preferredLanes: '',
-    homeBase: '',
-    availableDate: '',
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('connected');
-  const [debugInfo, setDebugInfo] = useState<string>('');
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [activeForm, setActiveForm] = useState<'quote' | 'contact' | 'driver'>('quote');
+  const [activeForm, setActiveForm] = useState<'quote' | 'contact'>('quote');
 
-  const checkConnection = async () => {
-    try {
-      setConnectionStatus('checking');
-      setDebugInfo('Checking Supabase connection... URL: ' + import.meta.env.VITE_SUPABASE_URL);
-      
-      const result = await testSupabaseConnection();
-      
-      if (result.success) {
-        setConnectionStatus('connected');
-        setDebugInfo('✅ Supabase connection successful');
-      } else {
-        setConnectionStatus('error');
-        setDebugInfo(`❌ Connection failed: ${result.error}`);
-      }
-    } catch (error: any) {
-      setConnectionStatus('error');
-      setDebugInfo(`❌ Unexpected error: ${error.message}`);
-    }
-  };
-
-  const retryConnection = async () => {
-    setIsRetrying(true);
-    await checkConnection();
-    setIsRetrying(false);
-  };
-
-  const handleInputChange = (field: string, value: string, formType: 'quote' | 'contact' | 'driver' = 'quote') => {
+  const handleInputChange = (field: string, value: string, formType: 'quote' | 'contact' = 'quote') => {
     if (formType === 'quote') {
       setFormData(prev => ({ ...prev, [field]: value }));
     } else if (formType === 'contact') {
       setContactData(prev => ({ ...prev, [field]: value }));
-    } else if (formType === 'driver') {
-      setDriverData(prev => ({ ...prev, [field]: value }));
     }
   };
 
@@ -154,109 +96,77 @@ const SinglePageHome: React.FC = () => {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent, formType: 'quote' | 'contact' | 'driver') => {
+  // No backend: open the visitor's email app with the request pre-filled
+  const openEmail = (to: string, subject: string, lines: [string, string][]) => {
+    const body = lines
+      .filter(([, value]) => value.trim())
+      .map(([label, value]) => `${label}: ${value.trim()}`)
+      .join('\n');
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleSubmit = (e: React.FormEvent, formType: 'quote' | 'contact') => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
 
-    try {
-      if (formType === 'quote') {
-        if (!validateQuoteForm()) {
-          setIsSubmitting(false);
-          return;
-        }
+    if (formType === 'quote') {
+      if (!validateQuoteForm()) return;
 
-        const quoteData = {
-          pickup_location: formData.pickupLocation.trim(),
-          delivery_location: formData.deliveryLocation.trim(),
-          cargo_type: formData.cargoType.trim(),
-          weight: formData.weight.trim() || null,
-          dimensions: formData.dimensions.trim() || null,
-          pickup_date: formData.pickupDate || null,
-          delivery_date: formData.deliveryDate || null,
-          service_type: formData.serviceType,
-          special_requirements: formData.specialRequirements.trim() || null,
-          company_name: formData.companyName.trim(),
-          contact_name: formData.contactName.trim(),
-          email: formData.email.trim().toLowerCase(),
-          phone: formData.phone.trim(),
-          status: 'pending' as const,
-        };
+      openEmail('dispatch@bosaboss.com', `Quote Request - ${formData.companyName.trim()}`, [
+        ['Company', formData.companyName],
+        ['Contact Name', formData.contactName],
+        ['Email', formData.email],
+        ['Phone', formData.phone],
+        ['Pickup Location', formData.pickupLocation],
+        ['Delivery Location', formData.deliveryLocation],
+        ['Cargo Type', formData.cargoType],
+        ['Weight', formData.weight],
+        ['Dimensions', formData.dimensions],
+        ['Pickup Date', formData.pickupDate],
+        ['Delivery Date', formData.deliveryDate],
+        ['Service Type', formData.serviceType],
+        ['Special Requirements', formData.specialRequirements],
+      ]);
 
-        const { error: supabaseError } = await supabase
-          .from('quote_requests')
-          .insert(quoteData);
+      setIsSubmitted(true);
+      setFormData({
+        pickupLocation: '',
+        deliveryLocation: '',
+        cargoType: '',
+        weight: '',
+        dimensions: '',
+        pickupDate: '',
+        deliveryDate: '',
+        serviceType: 'ftl',
+        specialRequirements: '',
+        companyName: '',
+        contactName: '',
+        email: '',
+        phone: '',
+      });
+    } else {
+      if (!validateContactForm()) return;
 
-        if (supabaseError) {
-          console.error('Supabase error:', supabaseError);
-          setError('Failed to submit quote. Please try again or contact us directly.');
-          return;
-        }
+      openEmail('info@bosaboss.com', contactData.subject.trim() || `Website inquiry from ${contactData.name.trim()}`, [
+        ['Name', contactData.name],
+        ['Email', contactData.email],
+        ['Phone', contactData.phone],
+        ['Inquiry Type', contactData.inquiryType],
+        ['Preferred Language', contactData.language],
+        ['Message', contactData.message],
+      ]);
 
-        setIsSubmitted(true);
-        setFormData({
-          pickupLocation: '',
-          deliveryLocation: '',
-          cargoType: '',
-          weight: '',
-          dimensions: '',
-          pickupDate: '',
-          deliveryDate: '',
-          serviceType: 'ftl',
-          specialRequirements: '',
-          companyName: '',
-          contactName: '',
-          email: '',
-          phone: '',
-        });
-
-      } else if (formType === 'contact') {
-        if (!validateContactForm()) {
-          setIsSubmitting(false);
-          return;
-        }
-
-        const contactFormData = {
-          name: contactData.name.trim(),
-          email: contactData.email.trim().toLowerCase(),
-          phone: contactData.phone.trim() || null,
-          subject: contactData.subject.trim() || null,
-          message: contactData.message.trim(),
-          inquiry_type: contactData.inquiryType,
-          status: 'new' as const,
-        };
-
-        const { error: supabaseError } = await supabase
-          .from('contact_messages')
-          .insert(contactFormData);
-
-        if (supabaseError) {
-          console.error('Supabase error:', supabaseError);
-          setError('Failed to send message. Please try again or contact us directly.');
-          return;
-        }
-
-        setIsSubmitted(true);
-        setContactData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          message: '',
-          inquiryType: 'general',
-          language: 'english',
-        });
-
-      } else if (formType === 'driver') {
-        // Driver application logic would go here
-        setIsSubmitted(true);
-      }
-
-    } catch (error: any) {
-      console.error('Error submitting form:', error);
-      setError('Failed to submit. Please try again or contact us directly.');
-    } finally {
-      setIsSubmitting(false);
+      setIsSubmitted(true);
+      setContactData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+        inquiryType: 'general',
+        language: 'english',
+      });
     }
   };
 
@@ -363,14 +273,15 @@ const SinglePageHome: React.FC = () => {
           <Card className="animate-fade-in">
             <CheckCircle className="h-20 w-20 text-green-400 mx-auto mb-8 animate-glow-pulse" />
               <h1 className="text-3xl font-black text-white mb-6">
-  {activeForm === 'quote' ? 'Quote Request Submitted!' :
-   activeForm === 'contact' ? 'Message Sent Successfully!' :
-   'Application Submitted!'}
+  {activeForm === 'quote' ? 'Almost Done — Send Your Quote Request' : 'Almost Done — Send Your Message'}
 </h1>
 
             <p className="text-lg text-white/80 mb-8 leading-relaxed">
-              Thank you for your submission. We've received your information and will get back to you 
-              within 2 hours during business hours.
+              Your email app has opened with your details filled in — just press Send. We'll get back to you
+              within 2 hours during business hours. If nothing opened, email us at{' '}
+              <a href={`mailto:${activeForm === 'quote' ? 'dispatch' : 'info'}@bosaboss.com`} className="text-red-primary underline">
+                {activeForm === 'quote' ? 'dispatch' : 'info'}@bosaboss.com
+              </a>.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button onClick={() => window.location.reload()}>
@@ -380,7 +291,7 @@ const SinglePageHome: React.FC = () => {
                 setIsSubmitted(false);
                 setError('');
               }}>
-                Submit Another {activeForm === 'quote' ? 'Quote' : activeForm === 'contact' ? 'Message' : 'Application'}
+                Submit Another {activeForm === 'quote' ? 'Quote' : 'Message'}
               </Button>
             </div>
           </Card>
@@ -514,45 +425,6 @@ const SinglePageHome: React.FC = () => {
             </p>
           </div>
 
-          {/* Connection Status */}
-          {connectionStatus !== 'connected' && (
-            <div className={`mb-6 p-4 rounded-lg border-2 animate-fade-in ${
-              connectionStatus === 'checking' 
-                ? 'bg-blue-primary/20 border-blue-primary/50' 
-                : 'bg-red-primary/20 border-red-primary/50'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Settings className={`h-5 w-5 ${
-                    connectionStatus === 'checking' ? 'text-blue-400 animate-spin' : 'text-red-primary'
-                  }`} />
-                  <p className={`font-semibold ${
-                    connectionStatus === 'checking' ? 'text-blue-400' : 'text-red-primary'
-                  }`}>
-                    {connectionStatus === 'checking' ? 'Checking database connection...' : 'Database Connection Issue'}
-                  </p>
-                </div>
-                {connectionStatus === 'error' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={retryConnection}
-                    disabled={isRetrying}
-                    className="ml-4"
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isRetrying ? 'animate-spin' : ''}`} />
-                    {isRetrying ? 'Retrying...' : 'Retry'}
-                  </Button>
-                )}
-              </div>
-              {debugInfo && (
-                <div className="mt-3 p-3 bg-black-primary/50 rounded border border-red-primary/30">
-                  <p className="text-sm text-white/80 font-mono">{debugInfo}</p>
-                </div>
-              )}
-            </div>
-          )}
-
           {error && (
             <div className="mb-6 bg-red-primary/20 border-2 border-red-primary/50 rounded-lg p-4 animate-fade-in">
               <div className="flex items-center space-x-2">
@@ -662,10 +534,9 @@ const SinglePageHome: React.FC = () => {
                     type="submit" 
                     size="lg" 
                     className="w-full shadow-red-glow-lg"
-                    disabled={isSubmitting || connectionStatus === 'error'}
                     onClick={() => setActiveForm('quote')}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Get My Quote'}
+                    Get My Quote
                   </Button>
                 </form>
               </Card>
@@ -869,10 +740,9 @@ const SinglePageHome: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full shadow-red-glow"
-                  disabled={isSubmitting}
                   onClick={() => setActiveForm('contact')}
                 >
-                  {isSubmitting ? 'Sending Message...' : 'Send Message'}
+                  Send Message
                 </Button>
               </form>
             </Card>

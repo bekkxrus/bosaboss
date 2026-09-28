@@ -1,1 +1,0 @@
-ERROR:  42710: type "user_role" already exists

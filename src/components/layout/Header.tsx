@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogIn } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Menu, X, Calculator } from 'lucide-react';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,22 +69,15 @@ const Header: React.FC = () => {
             ))}
           </nav>
 
-          {/* Auth Buttons - Desktop */}
-          <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
-            <Link
-              to="/login"
-              className="flex items-center space-x-2 text-white hover:text-red-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-red-primary/10"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="text-sm font-semibold">Sign In</span>
-            </Link>
-            <Link
-              to="/register"
+          {/* Quote CTA - Desktop */}
+          <div className="hidden lg:flex items-center flex-shrink-0">
+            <button
+              onClick={() => handleNavClick('#quote')}
               className="flex items-center space-x-2 bg-button-gradient hover:bg-red-secondary text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-red-glow hover:shadow-red-glow-lg transform hover:scale-105"
             >
-              <User className="h-4 w-4" />
-              <span className="text-sm font-semibold">Sign Up</span>
-            </Link>
+              <Calculator className="h-4 w-4" />
+              <span className="text-sm font-semibold">Get a Quote</span>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -114,24 +107,15 @@ const Header: React.FC = () => {
                 </button>
               ))}
               
-              {/* Mobile Auth Links */}
-              <div className="pt-4 border-t border-red-primary/30 space-y-3">
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-2 text-white hover:text-red-primary transition-all duration-300 py-2 px-4 rounded-lg hover:bg-red-primary/10"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Sign In</span>
-                </Link>
-                <Link
-                  to="/register"
+              {/* Mobile Quote CTA */}
+              <div className="pt-4 border-t border-red-primary/30">
+                <button
+                  onClick={() => handleNavClick('#quote')}
                   className="flex items-center space-x-2 bg-button-gradient hover:bg-red-secondary text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-red-glow w-fit"
-                  onClick={() => setIsOpen(false)}
                 >
-                  <User className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Sign Up</span>
-                </Link>
+                  <Calculator className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Get a Quote</span>
+                </button>
               </div>
             </nav>
           </div>
