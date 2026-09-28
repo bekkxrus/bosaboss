@@ -377,11 +377,11 @@ const SinglePageHome: React.FC = () => {
             <img
               src={photo(27099095, 1600)}
               alt="Red Kenworth semi truck on the open highway"
-              className="w-full h-64 md:h-96 object-cover"
+              className="w-full h-64 md:h-[28rem] object-cover object-[center_85%]"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-            <p className="absolute bottom-6 left-6 right-6 text-xl md:text-3xl font-black text-white">
+            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-l from-black/85 via-black/20 to-transparent"></div>
+            <p className="absolute top-5 left-5 right-5 md:left-auto md:right-8 md:top-1/2 md:-translate-y-1/2 md:max-w-sm md:text-right text-xl md:text-3xl font-black text-white drop-shadow-lg">
               Keeping America's freight <span className="text-red-primary">moving</span> — mile after mile.
             </p>
           </div>
