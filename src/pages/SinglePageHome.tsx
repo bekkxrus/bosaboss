@@ -319,15 +319,20 @@ const SinglePageHome: React.FC = () => {
 
       {/* Hero Section */}
       <section id="home" className="min-h-screen flex items-center relative overflow-hidden">
-        {/* Background Photo */}
+        {/* Background Video */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <img
-            src={photo(37538286, 1920)}
-            alt="Red semi truck driving on a highway"
+          <video
             className="absolute inset-0 w-full h-full object-cover"
-            fetchPriority="high"
+            src="/videos/bosaboss-hero.mp4"
+            poster="/images/hero-poster.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/30"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
@@ -362,15 +367,25 @@ const SinglePageHome: React.FC = () => {
       {/* About Section */}
       <section id="about" className="py-20 bg-section-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-              About <span className="text-red-primary">BosaBoss</span>
-            </h2>
-            <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-              Your All-in-One Logistics & Dispatch Partner. BosaBoss was built from the ground up with one mission: 
-              to elevate the experience of trucking professionals by offering comprehensive, in-house logistics and 
-              dispatch solutions that put drivers first.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16 animate-fade-in">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                About <span className="text-red-primary">BosaBoss</span>
+              </h2>
+              <p className="text-lg md:text-xl text-white/80 leading-relaxed">
+                Your All-in-One Logistics & Dispatch Partner. BosaBoss was built from the ground up with one mission:
+                to elevate the experience of trucking professionals by offering comprehensive, in-house logistics and
+                dispatch solutions that put drivers first.
+              </p>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-red-primary/30 shadow-red-glow">
+              <img
+                src="/images/bosaboss-container.jpg"
+                alt="BosaBoss branded shipping container lifted by a crane"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
           </div>
 
           <div className="relative mb-16 rounded-2xl overflow-hidden border border-red-primary/30 shadow-red-glow">
