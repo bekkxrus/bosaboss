@@ -43,7 +43,10 @@ const SinglePageHome: React.FC = () => {
     language: 'english',
   });
 
-    const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Honeypot field: hidden from people, bots tend to fill it in
+  const [website, setWebsite] = useState('');
   const [error, setError] = useState('');
   const [activeForm, setActiveForm] = useState<'quote' | 'contact'>('quote');
 
@@ -100,77 +103,63 @@ const SinglePageHome: React.FC = () => {
     return true;
   };
 
-  // No backend: open the visitor's email app with the request pre-filled
-  const openEmail = (to: string, subject: string, lines: [string, string][]) => {
-    const body = lines
-      .filter(([, value]) => value.trim())
-      .map(([label, value]) => `${label}: ${value.trim()}`)
-      .join('\n');
-    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.scrollTo({ top: 0 });
+  // Send the lead to our serverless function (saves to Supabase + posts to Telegram)
+  const sendLead = async (payload: Record<string, string>) => {
+    const res = await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, website }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Something went wrong');
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent, formType: 'quote' | 'contact') => {
+  const handleSubmit = async (e: React.FormEvent, formType: 'quote' | 'contact') => {
     e.preventDefault();
     setError('');
+    setActiveForm(formType);
 
-    if (formType === 'quote') {
-      if (!validateQuoteForm()) return;
+    if (formType === 'quote' ? !validateQuoteForm() : !validateContactForm()) return;
 
-      openEmail('dispatch@bosaboss.com', `Quote Request - ${formData.companyName.trim()}`, [
-        ['Company', formData.companyName],
-        ['Contact Name', formData.contactName],
-        ['Email', formData.email],
-        ['Phone', formData.phone],
-        ['Pickup Location', formData.pickupLocation],
-        ['Delivery Location', formData.deliveryLocation],
-        ['Cargo Type', formData.cargoType],
-        ['Weight', formData.weight],
-        ['Dimensions', formData.dimensions],
-        ['Pickup Date', formData.pickupDate],
-        ['Delivery Date', formData.deliveryDate],
-        ['Service Type', formData.serviceType],
-        ['Special Requirements', formData.specialRequirements],
-      ]);
-
+    setIsSubmitting(true);
+    try {
+      if (formType === 'quote') {
+        await sendLead({ type: 'quote', ...formData });
+        setFormData({
+          pickupLocation: '',
+          deliveryLocation: '',
+          cargoType: '',
+          weight: '',
+          dimensions: '',
+          pickupDate: '',
+          deliveryDate: '',
+          serviceType: 'ftl',
+          specialRequirements: '',
+          companyName: '',
+          contactName: '',
+          email: '',
+          phone: '',
+        });
+      } else {
+        await sendLead({ type: 'contact', ...contactData });
+        setContactData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          inquiryType: 'general',
+          language: 'english',
+        });
+      }
       setIsSubmitted(true);
-      setFormData({
-        pickupLocation: '',
-        deliveryLocation: '',
-        cargoType: '',
-        weight: '',
-        dimensions: '',
-        pickupDate: '',
-        deliveryDate: '',
-        serviceType: 'ftl',
-        specialRequirements: '',
-        companyName: '',
-        contactName: '',
-        email: '',
-        phone: '',
-      });
-    } else {
-      if (!validateContactForm()) return;
-
-      openEmail('info@bosaboss.com', contactData.subject.trim() || `Website inquiry from ${contactData.name.trim()}`, [
-        ['Name', contactData.name],
-        ['Email', contactData.email],
-        ['Phone', contactData.phone],
-        ['Inquiry Type', contactData.inquiryType],
-        ['Preferred Language', contactData.language],
-        ['Message', contactData.message],
-      ]);
-
-      setIsSubmitted(true);
-      setContactData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-        inquiryType: 'general',
-        language: 'english',
-      });
+      window.scrollTo({ top: 0 });
+    } catch {
+      setError('Sorry, we could not send your request. Please try again or call us at 407-777-2772.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -285,15 +274,12 @@ const SinglePageHome: React.FC = () => {
           <Card className="animate-fade-in">
             <CheckCircle className="h-20 w-20 text-green-400 mx-auto mb-8 animate-glow-pulse" />
               <h1 className="text-3xl font-black text-white mb-6">
-  {activeForm === 'quote' ? 'Almost Done — Send Your Quote Request' : 'Almost Done — Send Your Message'}
+  {activeForm === 'quote' ? 'Quote Request Received!' : 'Message Received!'}
 </h1>
 
             <p className="text-lg text-white/80 mb-8 leading-relaxed">
-              Your email app has opened with your details filled in — just press Send. We'll get back to you
-              within 2 hours during business hours. If nothing opened, email us at{' '}
-              <a href={`mailto:${activeForm === 'quote' ? 'dispatch' : 'info'}@bosaboss.com`} className="text-red-primary underline">
-                {activeForm === 'quote' ? 'dispatch' : 'info'}@bosaboss.com
-              </a>.
+              Thank you! Our team has your request and will get back to you within 2 hours
+              during business hours.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button onClick={() => window.location.reload()}>
@@ -472,15 +458,6 @@ const SinglePageHome: React.FC = () => {
             </p>
           </div>
 
-          {error && (
-            <div className="mb-6 bg-red-primary/20 border-2 border-red-primary/50 rounded-lg p-4 animate-fade-in">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-5 w-5 text-red-primary" />
-                <p className="text-red-primary font-semibold">{error}</p>
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <Card className="animate-fade-in">
@@ -577,13 +554,33 @@ const SinglePageHome: React.FC = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    size="lg" 
+                  <input
+                    type="text"
+                    name="website"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="hidden"
+                  />
+
+                  {error && activeForm === 'quote' && (
+                    <div className="mb-6 bg-red-primary/20 border-2 border-red-primary/50 rounded-lg p-4 animate-fade-in">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="h-5 w-5 text-red-primary" />
+                        <p className="text-red-primary font-semibold">{error}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    size="lg"
                     className="w-full shadow-red-glow-lg"
-                    onClick={() => setActiveForm('quote')}
+                    disabled={isSubmitting}
                   >
-                    Get My Quote
+                    {isSubmitting && activeForm === 'quote' ? 'Sending...' : 'Get My Quote'}
                   </Button>
                 </form>
               </Card>
@@ -743,7 +740,7 @@ const SinglePageHome: React.FC = () => {
             <Card className="animate-fade-in">
               <h3 className="text-xl font-black text-white mb-6">Send us a Message</h3>
               
-              {error && (
+              {error && activeForm === 'contact' && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="h-5 w-5 text-red-400" />
@@ -801,12 +798,23 @@ const SinglePageHome: React.FC = () => {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
+                <input
+                  type="text"
+                  name="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                />
+
+                <Button
+                  type="submit"
                   className="w-full shadow-red-glow"
-                  onClick={() => setActiveForm('contact')}
+                  disabled={isSubmitting}
                 >
-                  Send Message
+                  {isSubmitting && activeForm === 'contact' ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             </Card>
