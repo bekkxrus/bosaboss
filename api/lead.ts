@@ -118,17 +118,28 @@ async function sendToTelegram(lead: Lead): Promise<void> {
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) throw new Error('Telegram is not configured');
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: formatTelegramMessage(lead),
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-    }),
-  });
-  if (!res.ok) throw new Error(`Telegram ${res.status}: ${await res.text()}`);
+  const send = (chat: string | number) =>
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chat,
+        text: formatTelegramMessage(lead),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
+    });
+
+  let res = await send(chatId);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    // Telegram changes a group's id when it becomes a supergroup; follow it
+    const newChatId = error?.parameters?.migrate_to_chat_id;
+    if (!newChatId) throw new Error(`Telegram ${res.status}: ${JSON.stringify(error)}`);
+    console.warn(`Telegram group moved: update TELEGRAM_CHAT_ID to ${newChatId}`);
+    res = await send(newChatId);
+    if (!res.ok) throw new Error(`Telegram ${res.status}: ${await res.text()}`);
+  }
 }
 
 export async function POST(request: Request): Promise<Response> {
